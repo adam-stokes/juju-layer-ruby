@@ -100,13 +100,14 @@ def ruby_dist_dir():
     return os.path.join(hookenv.charm_dir(), config['ruby-application-dir'])
 
 
-def bundler(cmd):
-    """ Runs bundler
+def bundle(cmd):
+    """ Runs bundle
 
     Usage:
 
-       bundler('install')
-       bundler('exec rails s')
+       bundle('install')
+       bundle('exec rails s')
+       bundle('rake db:create RAILS_ENV=production')
 
     Arguments:
     cmd: Command to run can be string or list
@@ -122,7 +123,7 @@ def bundler(cmd):
         cmd = deque(shlex.split(cmd))
     else:
         cmd = deque(cmd)
-    cmd.appendleft('bundler')
+    cmd.appendleft('bundle')
     try:
         check_call(cmd)
         os.chdir(os.getenv('CHARM_DIR'))
