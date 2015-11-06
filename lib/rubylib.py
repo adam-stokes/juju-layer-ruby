@@ -11,6 +11,7 @@ from charmhelpers.fetch import apt_install
 
 config = hookenv.config()
 WORKDIR = '/tmp/ruby'
+COMPILESCRIPT = os.path.join(hookenv.charm_dir(), 'scripts/compileruby.sh')
 
 
 # HELPERS ---------------------------------------------------------------------
@@ -41,11 +42,7 @@ def install_dev_packages():
 def compile_ruby():
     os.chdir(WORKDIR)
     try:
-        check_call('./configure --prefix=/usr 2>&1 '
-                   '>> {}/configure.log'.format(WORKDIR),
-                   shell=True)
-        check_call('make 2>&1 >> {}/make.log'.format(WORKDIR), shell=True)
-        check_call('make install 2>&1 >> {}/make.install.log'.format(WORKDIR),
+        check_call(COMPILESCRIPT,
                    shell=True)
     except CalledProcessError as e:
         hookenv.status_set('blocked', 'Unable to compile Ruby: {}'.format(e))
