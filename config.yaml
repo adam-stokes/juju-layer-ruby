@@ -1,0 +1,15 @@
+options:
+  ruby-version:
+    default: '2.2.3'
+    description: |
+      Ruby Version to use for your application.
+    type: string
+  ruby-mirror:
+    default: 'https://cache.ruby-lang.org/pub/ruby'
+    description: |
+      Default mirror to pull Ruby from, choose one closest to your datacenter.
+  ruby-application-dir:
+    type: string
+    default: 'dist'
+    description: |
+      The default location of your Ruby application, defaults $CHARM_DIR/dist
