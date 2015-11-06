@@ -40,15 +40,12 @@ def install_dev_packages():
 
 def compile_ruby():
     os.chdir(WORKDIR)
-    sh = shell('pwd')
-    hookenv.log('Curdir: {}'.format(sh.output()), 'debug')
-    cmds = []
-    cmds.append(
-        'RUBY_CFLAGS=-O3 {}/configure --prefix=/usr '
-        '--disable-install-rdoc'.format(WORKDIR)
-    )
-    cmds.append('make -j{}'.format(cpu_count()))
-    cmds.append('make install')
+    cmds = [
+        'env RUBY_CFLAGS="-O3" ./configure --prefix=/usr '
+        '--disable-install-rdoc',
+        'make -j{}'.format(cpu_count()),
+        'make install'
+    ]
 
     for cmd in cmds:
         hookenv.log('Running compile command: {}'.format(cmd))
