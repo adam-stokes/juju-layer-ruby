@@ -128,7 +128,7 @@ def bundle(cmd):
     if not isinstance(cmd, str):
         hookenv.log('{} must be a string'.format(cmd), 'error')
         sys.exit(0)
-    cmd = "bundle -j{} {}".format(cpu_count(), cmd)
+    cmd = "bundle {} -j{}".format(cmd, cpu_count())
     os.chdir(os.getenv('CHARM_DIR'))
     sh = shell(cmd, record_output=False)
 
