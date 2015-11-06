@@ -1,10 +1,8 @@
-import shlex
 import os
 import sys
 from shutil import rmtree
-from collections import deque
-from subprocess import check_call, CalledProcessError
 from multiprocessing import cpu_count
+from shell import shell
 import requests
 
 from charmhelpers.core import hookenv
@@ -42,12 +40,23 @@ def install_dev_packages():
 
 def compile_ruby():
     os.chdir(WORKDIR)
-    try:
-        check_call(COMPILESCRIPT,
-                   shell=True)
-    except CalledProcessError as e:
-        hookenv.status_set('blocked', 'Unable to compile Ruby: {}'.format(e))
-        sys.exit(0)
+    sh = shell('pwd')
+    hookenv.log('Curdir: {}'.format(sh.output()), 'debug')
+    cmds = []
+    cmds.append(
+        'RUBY_CFLAGS=-O3 {}/configure --prefix=/usr '
+        '--disable-install-rdoc'.format(WORKDIR)
+    )
+    cmds.append('make -j{}'.format(cpu_count()))
+    cmds.append('make install')
+
+    for cmd in cmds:
+        hookenv.log('Running compile command: {}'.format(cmd))
+        sh = shell(cmd, record_output=False)
+        if sh.code > 0:
+            hookenv.status_set('blocked',
+                               'Problem with Ruby: {}'.format(sh.errors()))
+            sys.exit(0)
 
     hookenv.status_set('maintenance', 'Installing Ruby completed.')
 
@@ -67,13 +76,10 @@ def download_ruby():
     hookenv.status_set('maintenance',
                        'Installing Ruby {}'.format(url))
 
-    try:
-        cmd = ('wget -q -O /tmp/ruby.tar.gz {}'.format(url))
-        hookenv.log("Downloading ruby: {}".format(cmd))
-        check_call(cmd, shell=True)
-    except CalledProcessError as e:
-        hookenv.log('Problem downlading: {}:{}'.format(cmd, e),
-                    'debug')
+    sh = shell('wget -q -O /tmp/ruby.tar.gz {}'.format(url))
+    if sh.code > 0:
+        hookenv.status_set('blocked',
+                           'Problem downlading Ruby: {}'.format(sh.errors()))
         sys.exit(0)
 
 
@@ -83,11 +89,12 @@ def extract_ruby():
     os.makedirs(WORKDIR)
     os.chdir('/tmp')
     cmd = ('tar xf ruby.tar.gz -C {} --strip-components=1'.format(WORKDIR))
-    try:
-        check_call(cmd, shell=True)
-    except CalledProcessError as e:
-        hookenv.log('Problem extracting ruby: {}:{}'.format(cmd, e),
-                    'debug')
+    sh = shell(cmd)
+    if sh.code > 0:
+        hookenv.status_set(
+            'blocked',
+            'Problem extracting ruby: {}:{}'.format(cmd,
+                                                    sh.errors()))
         sys.exit(0)
 
 
@@ -116,21 +123,20 @@ def bundle(cmd):
     Returns:
     Will halt on error
     """
-    if 0 != check_call('which bundler', shell=True):
+    sh = shell('which bundler')
+    if sh.code > 0:
         gem('install bundler')
     hookenv.status_set('maintenance', 'Running Bundler')
     os.chdir(ruby_dist_dir())
-    if isinstance(cmd, str):
-        cmd = deque(shlex.split(cmd))
-    else:
-        cmd = deque(cmd)
-    cmd.appendleft('bundle')
-    cmd.append('-j{}'.format(cpu_count()))
-    try:
-        check_call(cmd)
-        os.chdir(os.getenv('CHARM_DIR'))
-    except CalledProcessError as e:
-        hookenv.status_set("blocked", "Ruby error: {}".format(e))
+    if not isinstance(cmd, str):
+        hookenv.log('{} must be a string'.format(cmd), 'error')
+        sys.exit(0)
+    cmd = "bundle -j{} {}".format(cpu_count(), cmd)
+    os.chdir(os.getenv('CHARM_DIR'))
+    sh = shell(cmd, record_output=False)
+
+    if sh.code > 0:
+        hookenv.status_set("blocked", "Ruby error: {}".format(sh.errors()))
         sys.exit(0)
 
 
@@ -148,16 +154,12 @@ def gem(cmd):
     Will halt on error
     """
     hookenv.status_set('maintenance', 'Running Gem')
-    if isinstance(cmd, str):
-        cmd = deque(shlex.split(cmd))
-    else:
-        cmd = deque(cmd)
-    cmd.appendleft('gem')
-    cmd.append('--no-ri')
-    cmd.append('--no-rdoc')
-    try:
-        check_call(cmd)
-        os.chdir(os.getenv('CHARM_DIR'))
-    except CalledProcessError as e:
-        hookenv.status_set("blocked", "Ruby error: {}".format(e))
+    if not isinstance(cmd, str):
+        hookenv.log('{} must be a string'.format(cmd), 'error')
+        sys.exit(0)
+    cmd = "gem --no-ri --no-rdoc {}".format(cmd)
+    os.chdir(os.getenv('CHARM_DIR'))
+    sh = shell(cmd, record_output=False)
+    if sh.code > 0:
+        hookenv.status_set("blocked", "Ruby error: {}".format(sh.errors()))
         sys.exit(0)
