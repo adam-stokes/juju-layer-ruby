@@ -4,6 +4,7 @@ import sys
 from shutil import rmtree
 from collections import deque
 from subprocess import check_call, CalledProcessError
+from multiprocessing import cpu_count
 import requests
 
 from charmhelpers.core import hookenv
@@ -124,6 +125,7 @@ def bundle(cmd):
     else:
         cmd = deque(cmd)
     cmd.appendleft('bundle')
+    cmd.append('-j{}'.format(cpu_count()))
     try:
         check_call(cmd)
         os.chdir(os.getenv('CHARM_DIR'))
@@ -151,6 +153,8 @@ def gem(cmd):
     else:
         cmd = deque(cmd)
     cmd.appendleft('gem')
+    cmd.append('--no-ri')
+    cmd.append('--no-rdoc')
     try:
         check_call(cmd)
         os.chdir(os.getenv('CHARM_DIR'))

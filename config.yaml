@@ -1,6 +1,6 @@
 options:
   ruby-version:
-    default: '2.2.3'
+    default: '2.2.0'
     description: |
       Ruby Version to use for your application.
     type: string
