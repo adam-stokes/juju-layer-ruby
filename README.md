@@ -15,7 +15,7 @@ Example,
 
 ```python
 
-from rubylib import bundler, ruby_dist_dir
+from rubylib import bundler, gem, ruby_dist_dir
 
 print(ruby_dist_dir())
 # /var/lib/juju/agents/unit-ruby-0/charm/dist
@@ -23,9 +23,23 @@ print(ruby_dist_dir())
 @when('ruby.available')
 def install_deps():
     bundler('install')
+    gem('install dotenv')
     bundler('exec rails s')
 
 ```
+
+# configuration
+
+You can add additional debian packages to your ruby install by editing a
+`dependencies.txt` and placing the package names seperated by newline.
+
+```
+libxml2-dev
+libyaml-dev
+```
+
+This layer will pick up those dependencies in addition to the required packages
+for ruby compilation.
 
 # license
 

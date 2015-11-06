@@ -1,11 +1,16 @@
 import shlex
 import os
 import sys
+from shutil import rmtree
 from collections import deque
-import subprocess
+from subprocess import check_call, CalledProcessError
 import requests
 
 from charmhelpers.core import hookenv
+from charmhelpers.fetch import apt_install
+
+config = hookenv.config()
+WORKDIR = '/tmp/ruby'
 
 
 # HELPERS ---------------------------------------------------------------------
@@ -16,6 +21,76 @@ def tarball_exists(url):
     if resp.status_code == 200:
         return True
     return False
+
+
+def install_dev_packages():
+    """ Installs any extra dev packages
+    """
+    pkgs = ['build-essential', 'libreadline-dev', 'libssl-dev',
+            'libgmp-dev', 'libffi-dev', 'libyaml-dev',
+            'zlib1g-dev', 'libgdbm-dev', 'openssl']
+    pkg_file = os.path.join(hookenv.charm_dir(), 'dependencies.txt')
+    if os.path.isfile(pkg_file):
+        with open(pkg_file, 'r') as fp:
+            for pkg in fp:
+                pkgs.append(pkg.strip())
+    hookenv.log('Installing packages: {}'.format(pkgs), 'debug')
+    apt_install(pkgs)
+
+
+def compile_ruby():
+    os.chdir(WORKDIR)
+    try:
+        check_call('./configure --prefix=/usr 2>&1 '
+                   '>> {}/configure.log'.format(WORKDIR),
+                   shell=True)
+        check_call('make 2>&1 >> {}/make.log'.format(WORKDIR), shell=True)
+        check_call('make install 2>&1 >> {}/make.install.log'.format(WORKDIR),
+                   shell=True)
+    except CalledProcessError as e:
+        hookenv.status_set('blocked', 'Unable to compile Ruby: {}'.format(e))
+        sys.exit(0)
+
+    hookenv.status_set('maintenance', 'Installing Ruby completed.')
+
+
+def download_ruby():
+    """ Downloads ruby tarball, puts it in /tmp
+    """
+    url = os.path.join(config['ruby-mirror'],
+                       'ruby-{}.tar.gz'.format(config['ruby-version']))
+    if not tarball_exists(url):
+        hookenv.status_set(
+            'blocked',
+            'Unable to find {} for download, please check your '
+            'mirror and version'.format(url))
+        sys.exit(0)
+
+    hookenv.status_set('maintenance',
+                       'Installing Ruby {}'.format(url))
+
+    try:
+        cmd = ('wget -q -O /tmp/ruby.tar.gz {}'.format(url))
+        hookenv.log("Downloading ruby: {}".format(cmd))
+        check_call(cmd, shell=True)
+    except CalledProcessError as e:
+        hookenv.log('Problem downlading: {}:{}'.format(cmd, e),
+                    'debug')
+        sys.exit(0)
+
+
+def extract_ruby():
+    if os.path.exists(WORKDIR):
+        rmtree(WORKDIR)
+    os.makedirs(WORKDIR)
+    os.chdir('/tmp')
+    cmd = ('tar xf ruby.tar.gz -C {} --strip-components=1'.format(WORKDIR))
+    try:
+        check_call(cmd, shell=True)
+    except CalledProcessError as e:
+        hookenv.log('Problem extracting ruby: {}:{}'.format(cmd, e),
+                    'debug')
+        sys.exit(0)
 
 
 def ruby_dist_dir():
@@ -42,7 +117,7 @@ def bundler(cmd):
     Returns:
     Will halt on error
     """
-    if 0 != subprocess.check_call('which bundler', shell=True):
+    if 0 != check_call('which bundler', shell=True):
         gem('install bundler')
     hookenv.status_set('maintenance', 'Running Bundler')
     os.chdir(ruby_dist_dir())
@@ -52,9 +127,9 @@ def bundler(cmd):
         cmd = deque(cmd)
     cmd.appendleft('bundler')
     try:
-        subprocess.check_call(cmd)
+        check_call(cmd)
         os.chdir(os.getenv('CHARM_DIR'))
-    except subprocess.CalledProcessError as e:
+    except CalledProcessError as e:
         hookenv.status_set("blocked", "Ruby error: {}".format(e))
         sys.exit(0)
 
@@ -79,8 +154,8 @@ def gem(cmd):
         cmd = deque(cmd)
     cmd.appendleft('gem')
     try:
-        subprocess.check_call(cmd)
+        check_call(cmd)
         os.chdir(os.getenv('CHARM_DIR'))
-    except subprocess.CalledProcessError as e:
+    except CalledProcessError as e:
         hookenv.status_set("blocked", "Ruby error: {}".format(e))
         sys.exit(0)
