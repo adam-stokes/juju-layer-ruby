@@ -16,6 +16,8 @@ WORKDIR = '/tmp/ruby'
 def git(cmd):
     """ simple git wrapper
     """
+    if not os.path.isfile('/usr/bin/git'):
+        apt_install(['git'])
     sh = shell("git {}".format(cmd))
     if sh.code > 0:
         hookenv.status_set('blocked',
@@ -131,7 +133,7 @@ def bundle(cmd):
     """
     sh = shell('which bundler')
     if sh.code > 0:
-        gem('install bundler')
+        gem('install -N bundler')
     hookenv.status_set('maintenance', 'Running Bundler')
     os.chdir(ruby_dist_dir())
     if not isinstance(cmd, str):
@@ -162,7 +164,7 @@ def gem(cmd):
     if not isinstance(cmd, str):
         hookenv.log('{} must be a string'.format(cmd), 'error')
         sys.exit(0)
-    cmd = "gem --no-ri --no-rdoc {}".format(cmd)
+    cmd = "gem {}".format(cmd)
     os.chdir(ruby_dist_dir())
     sh = shell(cmd, record_output=False)
     if sh.code > 0:
