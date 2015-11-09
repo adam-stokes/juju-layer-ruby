@@ -38,8 +38,9 @@ def install_dev_packages():
     """ Installs any extra dev packages
     """
     pkgs = ['build-essential', 'libreadline-dev', 'libssl-dev',
-            'libgmp-dev', 'libffi-dev', 'libyaml-dev',
-            'zlib1g-dev', 'libgdbm-dev', 'openssl']
+            'libgmp-dev', 'libffi-dev', 'libyaml-dev', 'libxslt-dev',
+            'zlib1g-dev', 'libgdbm-dev', 'openssl', 'libicu-dev', 'cmake',
+            'pkg-config', 'libxml2-dev', 'libncurses5-dev']
     pkg_file = os.path.join(hookenv.charm_dir(), 'dependencies.txt')
     if os.path.isfile(pkg_file):
         with open(pkg_file, 'r') as fp:
