@@ -18,7 +18,7 @@ def install_ruby():
     """ Installs defined ruby
 
     Emits:
-    nodejs.available: Emitted once the runtime has been installed
+    ruby.available: Emitted once the runtime has been installed
     """
     remove_state('ruby.available')
 

@@ -10,10 +10,19 @@ from charmhelpers.fetch import apt_install
 
 config = hookenv.config()
 WORKDIR = '/tmp/ruby'
-COMPILESCRIPT = os.path.join(hookenv.charm_dir(), 'scripts/compileruby.sh')
 
 
 # HELPERS ---------------------------------------------------------------------
+def git(cmd):
+    """ simple git wrapper
+    """
+    sh = shell("git {}".format(cmd))
+    if sh.code > 0:
+        hookenv.status_set('blocked',
+                           'Problem with Ruby: {}'.format(sh.errors()))
+        sys.exit(0)
+
+
 def tarball_exists(url):
     """ Checks that ruby tarball exists on mirror
     """
@@ -102,7 +111,7 @@ def ruby_dist_dir():
     Absolute string of ruby application directory
     """
     config = hookenv.config()
-    return os.path.join(hookenv.charm_dir(), config['ruby-application-dir'])
+    return os.path.join(config['app-path'])
 
 
 def bundle(cmd):
@@ -129,7 +138,6 @@ def bundle(cmd):
         hookenv.log('{} must be a string'.format(cmd), 'error')
         sys.exit(0)
     cmd = "bundle {} -j{}".format(cmd, cpu_count())
-    os.chdir(os.getenv('CHARM_DIR'))
     sh = shell(cmd, record_output=False)
 
     if sh.code > 0:
@@ -155,7 +163,7 @@ def gem(cmd):
         hookenv.log('{} must be a string'.format(cmd), 'error')
         sys.exit(0)
     cmd = "gem --no-ri --no-rdoc {}".format(cmd)
-    os.chdir(os.getenv('CHARM_DIR'))
+    os.chdir(ruby_dist_dir())
     sh = shell(cmd, record_output=False)
     if sh.code > 0:
         hookenv.status_set("blocked", "Ruby error: {}".format(sh.errors()))
