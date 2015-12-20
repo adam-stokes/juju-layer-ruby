@@ -22,7 +22,7 @@ def git(cmd):
     if sh.code > 0:
         hookenv.status_set('blocked',
                            'Problem with Ruby: {}'.format(sh.errors()))
-        sys.exit(0)
+        sys.exit(1)
 
 
 def tarball_exists(url):
@@ -65,7 +65,8 @@ def compile_ruby():
         if sh.code > 0:
             hookenv.status_set('blocked',
                                'Problem with Ruby: {}'.format(sh.errors()))
-            sys.exit(0)
+            hookenv.log("Problem with Ruby: {}".format(sh.errors()))
+            sys.exit(1)
 
     hookenv.status_set('maintenance', 'Installing Ruby completed.')
 
@@ -80,7 +81,9 @@ def download_ruby():
             'blocked',
             'Unable to find {} for download, please check your '
             'mirror and version'.format(url))
-        sys.exit(0)
+        hookenv.log('Unable to find {} for download, please check your '
+            'mirror and version'.format(url))
+        sys.exit(1)
 
     hookenv.status_set('maintenance',
                        'Installing Ruby {}'.format(url))
@@ -89,7 +92,8 @@ def download_ruby():
     if sh.code > 0:
         hookenv.status_set('blocked',
                            'Problem downlading Ruby: {}'.format(sh.errors()))
-        sys.exit(0)
+        hookenv.log( 'Problem downlading Ruby: {}'.format(sh.errors()))
+        sys.exit(1)
 
 
 def extract_ruby():
@@ -104,7 +108,9 @@ def extract_ruby():
             'blocked',
             'Problem extracting ruby: {}:{}'.format(cmd,
                                                     sh.errors()))
-        sys.exit(0)
+        hookenv.log('Problem extracting ruby: {}:{}'.format(cmd,
+                                                    sh.errors()))
+        sys.exit(1)
 
 
 def ruby_dist_dir():
@@ -139,13 +145,14 @@ def bundle(cmd):
     os.chdir(ruby_dist_dir())
     if not isinstance(cmd, str):
         hookenv.log('{} must be a string'.format(cmd), 'error')
-        sys.exit(0)
+        sys.exit(1)
     cmd = "bundle {} -j{}".format(cmd, cpu_count())
     sh = shell(cmd, record_output=False)
 
     if sh.code > 0:
         hookenv.status_set("blocked", "Ruby error: {}".format(sh.errors()))
-        sys.exit(0)
+        hookenv.log("Ruby error: {}".format(sh.errors()))
+        sys.exit(1)
 
 
 def gem(cmd):
@@ -164,10 +171,11 @@ def gem(cmd):
     hookenv.status_set('maintenance', 'Running Gem')
     if not isinstance(cmd, str):
         hookenv.log('{} must be a string'.format(cmd), 'error')
-        sys.exit(0)
+        sys.exit(1)
     cmd = "gem {}".format(cmd)
     os.chdir(ruby_dist_dir())
     sh = shell(cmd, record_output=False)
     if sh.code > 0:
         hookenv.status_set("blocked", "Ruby error: {}".format(sh.errors()))
-        sys.exit(0)
+        hookenv.log("Ruby error: {}".format(sh.errors()))
+        sys.exit(1)
