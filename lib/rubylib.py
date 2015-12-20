@@ -65,6 +65,7 @@ def compile_ruby():
         if sh.code > 0:
             hookenv.status_set('blocked',
                                'Problem with Ruby: {}'.format(sh.errors()))
+            hookenv.log("Problem with Ruby: {}".format(sh.errors()))
             sys.exit(1)
 
     hookenv.status_set('maintenance', 'Installing Ruby completed.')
@@ -80,6 +81,8 @@ def download_ruby():
             'blocked',
             'Unable to find {} for download, please check your '
             'mirror and version'.format(url))
+        hookenv.log('Unable to find {} for download, please check your '
+            'mirror and version'.format(url))
         sys.exit(1)
 
     hookenv.status_set('maintenance',
@@ -89,6 +92,7 @@ def download_ruby():
     if sh.code > 0:
         hookenv.status_set('blocked',
                            'Problem downlading Ruby: {}'.format(sh.errors()))
+        hookenv.log( 'Problem downlading Ruby: {}'.format(sh.errors()))
         sys.exit(1)
 
 
@@ -103,6 +107,8 @@ def extract_ruby():
         hookenv.status_set(
             'blocked',
             'Problem extracting ruby: {}:{}'.format(cmd,
+                                                    sh.errors()))
+        hookenv.log('Problem extracting ruby: {}:{}'.format(cmd,
                                                     sh.errors()))
         sys.exit(1)
 
@@ -145,6 +151,7 @@ def bundle(cmd):
 
     if sh.code > 0:
         hookenv.status_set("blocked", "Ruby error: {}".format(sh.errors()))
+        hookenv.log("Ruby error: {}".format(sh.errors()))
         sys.exit(1)
 
 
@@ -170,4 +177,5 @@ def gem(cmd):
     sh = shell(cmd, record_output=False)
     if sh.code > 0:
         hookenv.status_set("blocked", "Ruby error: {}".format(sh.errors()))
+        hookenv.log("Ruby error: {}".format(sh.errors()))
         sys.exit(1)
