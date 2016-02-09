@@ -13,12 +13,22 @@ WORKDIR = '/tmp/ruby'
 
 
 # HELPERS ---------------------------------------------------------------------
+def set_proxy(cmd):
+    """ Take a string to be executed by shell and add proxy if needed
+    """
+    http_proxy = config.get('http-proxy')
+    if http_proxy:
+        cmd = "env http_proxy='{}' {}".format(http_proxy, cmd)
+    return cmd
+
+
 def git(cmd):
     """ simple git wrapper
     """
     if not os.path.isfile('/usr/bin/git'):
         apt_install(['git'])
-    sh = shell("git {}".format(cmd))
+    shell_cmd = set_proxy("git {}".format(cmd))
+    sh = shell(shell_cmd)
     if sh.code > 0:
         hookenv.status_set('blocked',
                            'Problem with Ruby: {}'.format(sh.errors()))
@@ -82,17 +92,18 @@ def download_ruby():
             'Unable to find {} for download, please check your '
             'mirror and version'.format(url))
         hookenv.log('Unable to find {} for download, please check your '
-            'mirror and version'.format(url))
+                    'mirror and version'.format(url))
         sys.exit(1)
 
     hookenv.status_set('maintenance',
                        'Installing Ruby {}'.format(url))
 
-    sh = shell('wget -q -O /tmp/ruby.tar.gz {}'.format(url))
+    shell_cmd = set_proxy('wget -q -O /tmp/ruby.tar.gz {}'.format(url))
+    sh = shell(shell_cmd)
     if sh.code > 0:
         hookenv.status_set('blocked',
                            'Problem downlading Ruby: {}'.format(sh.errors()))
-        hookenv.log( 'Problem downlading Ruby: {}'.format(sh.errors()))
+        hookenv.log('Problem downlading Ruby: {}'.format(sh.errors()))
         sys.exit(1)
 
 
@@ -109,7 +120,7 @@ def extract_ruby():
             'Problem extracting ruby: {}:{}'.format(cmd,
                                                     sh.errors()))
         hookenv.log('Problem extracting ruby: {}:{}'.format(cmd,
-                                                    sh.errors()))
+                                                            sh.errors()))
         sys.exit(1)
 
 
@@ -146,8 +157,8 @@ def bundle(cmd):
     if not isinstance(cmd, str):
         hookenv.log('{} must be a string'.format(cmd), 'error')
         sys.exit(1)
-    cmd = "bundle {} -j{}".format(cmd, cpu_count())
-    sh = shell(cmd, record_output=False)
+    shell_cmd = set_proxy("bundle {} -j{}".format(cmd, cpu_count()))
+    sh = shell(shell_cmd, record_output=False)
 
     if sh.code > 0:
         hookenv.status_set("blocked", "Ruby error: {}".format(sh.errors()))
@@ -172,9 +183,9 @@ def gem(cmd):
     if not isinstance(cmd, str):
         hookenv.log('{} must be a string'.format(cmd), 'error')
         sys.exit(1)
-    cmd = "gem {}".format(cmd)
+    shell_cmd = set_proxy("gem {}".format(cmd))
     os.chdir(ruby_dist_dir())
-    sh = shell(cmd, record_output=False)
+    sh = shell(shell_cmd, record_output=False)
     if sh.code > 0:
         hookenv.status_set("blocked", "Ruby error: {}".format(sh.errors()))
         hookenv.log("Ruby error: {}".format(sh.errors()))
