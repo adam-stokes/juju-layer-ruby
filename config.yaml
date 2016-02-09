@@ -1,4 +1,9 @@
 options:
+  http-proxy:
+    default: ''
+    description: |
+      Proxy to use for downloading gems etc
+    type: string
   ruby-version:
     default: '2.2.0'
     description: |
