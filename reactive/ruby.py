@@ -19,8 +19,6 @@ def install_ruby():
 
     """ Installs defined ruby
     """
-    remove_state('ruby.available')
-
     # Cleanup any packaged ruby
     hookenv.log('Removing any packaged Ruby', 'debug')
     apt_purge(['ruby'])
@@ -37,7 +35,6 @@ def install_ruby():
     # Install
     rubylib.compile_ruby()
 
-    hookenv.status_set('active', 'Ruby is ready!')
     set_state('ruby.installed')
 
 
@@ -49,6 +46,7 @@ def ruby_avail():
     Emits:
     ruby.available: Emitted once the runtime has been installed
     """
+    hookenv.status_set('active', 'Ruby is ready!')
     set_state('ruby.available')
 
 
@@ -58,11 +56,3 @@ def ruby_unavail():
     """ Sets remove ruby.available
     """
     remove_state('ruby.available')
-
-
-@when('config.set.ruby-version')
-def version_changed():
-
-    """ React to ruby version changed
-    """
-    remove_state('ruby.installed')
