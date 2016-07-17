@@ -15,16 +15,16 @@ Example,
 
 ```python
 
-from rubylib import bundler, gem, ruby_dist_dir
+from rubylib import bundle, gem, ruby_dist_dir
 
 print(ruby_dist_dir())
 # /var/lib/juju/agents/unit-ruby-0/charm/dist
 
 @when('ruby.available')
 def install_deps():
-    bundler('install')
+    bundle('install')
     gem('install dotenv')
-    bundler('exec rails s')
+    bundle('exec rails s')
 
 ```
 
