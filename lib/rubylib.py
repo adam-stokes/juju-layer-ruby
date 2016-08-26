@@ -113,7 +113,7 @@ def extract_ruby():
     os.makedirs(WORKDIR)
     with chdir('/tmp'):
         cmd = ('tar xf ruby.tar.gz -C {} --strip-components=1'.format(WORKDIR))
-         sh = shell(cmd)
+        sh = shell(cmd)
         if sh.code > 0:
             hookenv.status_set(
                 'blocked',
