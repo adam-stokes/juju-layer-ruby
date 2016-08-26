@@ -6,6 +6,7 @@ from shell import shell
 import requests
 
 from charmhelpers.core import hookenv
+from charmhelpers.core.host import chdir
 from charmhelpers.fetch import apt_install
 
 config = hookenv.config()
@@ -61,23 +62,22 @@ def install_dev_packages():
 
 
 def compile_ruby():
-    os.chdir(WORKDIR)
-    cmds = [
-        'env RUBY_CFLAGS="-O3" ./configure --prefix=/usr '
-        '--disable-install-rdoc',
-        'make -j{}'.format(cpu_count()),
-        'make install'
-    ]
+    with chdir(WORKDIR):
+        cmds = [
+            'env RUBY_CFLAGS="-O3" ./configure --prefix=/usr '
+            '--disable-install-rdoc',
+            'make -j{}'.format(cpu_count()),
+            'make install'
+        ]
 
-    for cmd in cmds:
-        hookenv.log('Running compile command: {}'.format(cmd))
-        sh = shell(cmd, record_output=False)
-        if sh.code > 0:
-            hookenv.status_set('blocked',
-                               'Problem with Ruby: {}'.format(sh.errors()))
-            hookenv.log("Problem with Ruby: {}".format(sh.errors()))
-            sys.exit(1)
-
+        for cmd in cmds:
+            hookenv.log('Running compile command: {}'.format(cmd))
+            sh = shell(cmd, record_output=False)
+            if sh.code > 0:
+                hookenv.status_set('blocked',
+                                   'Problem with Ruby: {}'.format(sh.errors()))
+                hookenv.log("Problem with Ruby: {}".format(sh.errors()))
+                sys.exit(1)
     hookenv.status_set('maintenance', 'Installing Ruby completed.')
 
 
@@ -111,17 +111,17 @@ def extract_ruby():
     if os.path.exists(WORKDIR):
         rmtree(WORKDIR)
     os.makedirs(WORKDIR)
-    os.chdir('/tmp')
-    cmd = ('tar xf ruby.tar.gz -C {} --strip-components=1'.format(WORKDIR))
-    sh = shell(cmd)
-    if sh.code > 0:
-        hookenv.status_set(
-            'blocked',
-            'Problem extracting ruby: {}:{}'.format(cmd,
-                                                    sh.errors()))
-        hookenv.log('Problem extracting ruby: {}:{}'.format(cmd,
-                                                            sh.errors()))
-        sys.exit(1)
+    with chdir('/tmp'):
+        cmd = ('tar xf ruby.tar.gz -C {} --strip-components=1'.format(WORKDIR))
+         sh = shell(cmd)
+        if sh.code > 0:
+            hookenv.status_set(
+                'blocked',
+                'Problem extracting ruby: {}:{}'.format(cmd,
+                                                        sh.errors()))
+            hookenv.log('Problem extracting ruby: {}:{}'.format(cmd,
+                                                                sh.errors()))
+            sys.exit(1)
 
 
 def ruby_dist_dir():
@@ -153,17 +153,17 @@ def bundle(cmd):
     if sh.code > 0:
         gem('install -N bundler')
     hookenv.status_set('maintenance', 'Running Bundler')
-    os.chdir(ruby_dist_dir())
-    if not isinstance(cmd, str):
-        hookenv.log('{} must be a string'.format(cmd), 'error')
-        sys.exit(1)
-    shell_cmd = set_proxy("bundle {} -j{}".format(cmd, cpu_count()))
-    sh = shell(shell_cmd, record_output=False)
+    with chdir(ruby_dist_dir()):
+        if not isinstance(cmd, str):
+            hookenv.log('{} must be a string'.format(cmd), 'error')
+            sys.exit(1)
+        shell_cmd = set_proxy("bundle {} -j{}".format(cmd, cpu_count()))
+        sh = shell(shell_cmd, record_output=False)
 
-    if sh.code > 0:
-        hookenv.status_set("blocked", "Ruby error: {}".format(sh.errors()))
-        hookenv.log("Ruby error: {}".format(sh.errors()))
-        sys.exit(1)
+        if sh.code > 0:
+            hookenv.status_set("blocked", "Ruby error: {}".format(sh.errors()))
+            hookenv.log("Ruby error: {}".format(sh.errors()))
+            sys.exit(1)
 
 
 def gem(cmd):
@@ -184,9 +184,9 @@ def gem(cmd):
         hookenv.log('{} must be a string'.format(cmd), 'error')
         sys.exit(1)
     shell_cmd = set_proxy("gem {}".format(cmd))
-    os.chdir(ruby_dist_dir())
-    sh = shell(shell_cmd, record_output=False)
-    if sh.code > 0:
-        hookenv.status_set("blocked", "Ruby error: {}".format(sh.errors()))
-        hookenv.log("Ruby error: {}".format(sh.errors()))
-        sys.exit(1)
+    with chdir(ruby_dist_dir()):
+        sh = shell(shell_cmd, record_output=False)
+        if sh.code > 0:
+            hookenv.status_set("blocked", "Ruby error: {}".format(sh.errors()))
+            hookenv.log("Ruby error: {}".format(sh.errors()))
+            sys.exit(1)
