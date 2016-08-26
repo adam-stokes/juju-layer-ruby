@@ -20,8 +20,7 @@ def install_ruby():
     """ Installs defined ruby
     """
     # Cleanup any packaged ruby
-    hookenv.log('Removing any packaged Ruby', 'debug')
-    apt_purge(['ruby'])
+    hookenv.log('Installing ruby', 'debug')
 
     # Install prereqs
     rubylib.install_dev_packages()
