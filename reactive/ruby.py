@@ -6,8 +6,10 @@ from charms.reactive import (
 )
 
 from charmhelpers.core import hookenv
+from charmhelpers.fetch import apt_purge
 
-from charms.layer import ruby
+# ./lib/rubylib
+import rubylib
 
 config = hookenv.config()
 
@@ -20,14 +22,17 @@ def install_ruby():
     # Cleanup any packaged ruby
     hookenv.log('Installing ruby', 'debug')
 
+    # Install prereqs
+    rubylib.install_dev_packages()
+
     # Download
-    ruby.download_ruby()
+    rubylib.download_ruby()
 
     # Extract
-    ruby.extract_ruby()
+    rubylib.extract_ruby()
 
     # Install
-    ruby.compile_ruby()
+    rubylib.compile_ruby()
 
     set_state('ruby.installed')
 
