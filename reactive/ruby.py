@@ -38,6 +38,7 @@ def install_ruby():
 
 
 @when('ruby.installed')
+@when_not('ruby.available')
 def ruby_avail():
 
     """ Sets the ruby available state
