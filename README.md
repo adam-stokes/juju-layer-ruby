@@ -9,13 +9,13 @@ is ready to be used.
 
 # api
 
-All helper modules are found in `lib/rubylib.py`
+All helper modules are found in `lib/charms/layer/ruby.py` available `from charms.layer import ruby`
 
 Example,
 
 ```python
 
-from rubylib import bundle, gem, ruby_dist_dir
+from charms.layer.ruby import bundle, gem, ruby_dist_dir
 
 print(ruby_dist_dir())
 # /var/lib/juju/agents/unit-ruby-0/charm/dist
@@ -31,11 +31,14 @@ def install_deps():
 # configuration
 
 You can add additional debian packages to your ruby install by editing a
-`dependencies.txt` and placing the package names seperated by newline.
+`layer.yaml` and placing the package names as follows
 
 ```
-libxml2-dev
-libyaml-dev
+options:
+  basic:
+    packages:
+      - libxml2-dev
+      - libyaml-dev
 ```
 
 This layer will pick up those dependencies in addition to the required packages
