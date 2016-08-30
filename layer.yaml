@@ -1,1 +1,20 @@
 includes: ['layer:basic']
+tactics: ['tactics.ruby.DependenciesTxtTactic']
+options:
+  basic:
+    packages:
+      - build-essential
+      - libreadline-dev
+      - libssl-dev
+      - libgmp-dev
+      - libffi-dev
+      - libyaml-dev
+      - libxslt-dev
+      - zlib1g-dev
+      - libgdbm-dev
+      - openssl
+      - libicu-dev
+      - cmake
+      - pkg-config
+      - libxml2-dev
+      - libncurses5-dev
