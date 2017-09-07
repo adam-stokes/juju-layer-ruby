@@ -1,4 +1,4 @@
-
+from charmtools.build.errors import BuildError
 from charmtools.build.tactics import ExactMatch, Tactic
 
 
@@ -7,5 +7,6 @@ class DependenciesTxtTactic(ExactMatch, Tactic):
     kind = "dynamic"
 
     def __call__(self):
-        raise Exception('dependencies.txt is deprecated see '
-                        'https://github.com/battlemidget/juju-layer-ruby/pull/8')
+        raise BuildError(
+            'dependencies.txt is deprecated see '
+            'https://github.com/battlemidget/juju-layer-ruby/pull/8')
