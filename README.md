@@ -1,9 +1,9 @@
 # layer-ruby
 > Juju charms.reactive layer for Ruby
 
-# emitters
+# flags
 
-**ruby.available** - This state is automatically emitted once Ruby has been
+**ruby.available** - This flag is automatically set once Ruby has been
 installed. Rely on this state to perform an application deployment when Ruby
 is ready to be used.
 
@@ -15,10 +15,7 @@ Example,
 
 ```python
 
-from charms.layer.ruby import bundle, gem, ruby_dist_dir
-
-print(ruby_dist_dir())
-# /var/lib/juju/agents/unit-ruby-0/charm/dist
+from charms.layer.ruby import bundle, gem
 
 @when('ruby.available')
 def install_deps():
@@ -29,6 +26,21 @@ def install_deps():
 ```
 
 # configuration
+
+**ruby-runtime**: Set this to one of the supported implementations. Currently
+this supports:
+
+    * ruby (default)
+    * mruby
+    * maglev
+    * rubinius
+    * jruby
+
+**ruby-version**: Set to the version of ruby to install. Currently this supports:
+
+    * stable (default)
+    * latest
+    * <version string>
 
 You can add additional debian packages to your ruby install by editing a
 `layer.yaml` and placing the package names as follows

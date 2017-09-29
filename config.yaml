@@ -1,21 +1,13 @@
 options:
-  http-proxy:
-    default: ''
+  ruby-runtime:
+    default: 'ruby'
     description: |
-      Proxy to use for downloading gems etc
+      Ruby implementation to install, ruby,jruby,rubinius,maglev,mruby are supported.
     type: string
   ruby-version:
-    default: '2.4.1'
+    default: 'stable'
     description: |
-      Ruby Version to use for your application.
+      Ruby Version to use for your application, supported options are
+      stable,latest,<version>. <version> is the version of ruby to install, for
+      example, 2.4.2.
     type: string
-  ruby-mirror:
-    default: 'https://cache.ruby-lang.org/pub/ruby'
-    type: string
-    description: |
-      Default mirror to pull Ruby from, choose one closest to your datacenter.
-  app-path:
-    type: string
-    default: '/srv/app'
-    description: |
-      The default location of your Ruby application, defaults /srv/app
