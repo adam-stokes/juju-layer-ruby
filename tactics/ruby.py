@@ -3,10 +3,11 @@ from charmtools.build.tactics import ExactMatch, Tactic
 
 
 class DependenciesTxtTactic(ExactMatch, Tactic):
-    FILENAME = 'dependencies.txt'
+    FILENAME = "dependencies.txt"
     kind = "dynamic"
 
     def __call__(self):
         raise BuildError(
-            'dependencies.txt is deprecated see '
-            'https://github.com/battlemidget/juju-layer-ruby/pull/8')
+            "dependencies.txt is deprecated see "
+            "https://github.com/battlemidget/juju-layer-ruby/pull/8"
+        )

@@ -1,0 +1,6 @@
+black
+pylint
+flake8
+isort
+invoke
+sh
