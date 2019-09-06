@@ -1,20 +1,9 @@
 options:
-  ruby-snap:
+  snap-channel:
     default: '2.6/stable'
     description: |
       Install ruby from snapstore
     type: string
-  ruby-version:
-    default: ''
-    description: |
-      Ruby Version to use for your application, this overrides the `ruby-snap`
-      setting.
-    type: string
-  ruby-install-version:
-    default: '0.7.0'
-    type: string
-    description: |
-      Version of https://github.com/postmodern/ruby-install to install
   app-path:
     type: string
     default: '/srv/app'

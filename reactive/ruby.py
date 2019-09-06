@@ -1,6 +1,7 @@
 # pylint: disable=import-error
 # pylint: disable=no-name-in-module
 from charmhelpers.core import hookenv
+
 from charms.layer import ruby
 from charms.reactive import remove_state, set_state, when, when_not
 
