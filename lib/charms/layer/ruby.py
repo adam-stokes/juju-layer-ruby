@@ -43,12 +43,13 @@ def bundle(*args, **kwargs):
     Returns:
     Raises sh.ErrorReturnCode on error
     """
-    from sh import bundler as _bundler_internal
     from sh import which
-
-    has_bundler = which("bundler")
+    has_bundler = which("bundle")
     if not has_bundler:
         gem.install("-N", "bundler")
+
+    from sh import bundle as _bundler_internal
+
     hookenv.status_set("maintenance", "Running Bundler")
     return _bundler_internal.bake(
         *args, **kwargs, _env=os.environ.copy(), _cwd=ruby_dist_dir()
