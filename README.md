@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/battlemidget/juju-layer-ruby.svg?branch=master)](https://travis-ci.org/battlemidget/juju-layer-ruby)
+
 # layer-ruby
 > Juju charms.reactive layer for Ruby
 
