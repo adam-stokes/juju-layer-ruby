@@ -1,7 +1,2 @@
 includes: ['layer:basic', 'layer:snap']
 tactics: ['tactics.ruby.DependenciesTxtTactic']
-options:
-  basic:
-    packages:
-      - wget
-      - git
