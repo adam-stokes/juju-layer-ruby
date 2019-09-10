@@ -1,111 +1,22 @@
+# pylint: disable=import-error
+# pylint: disable=no-name-in-module
 import os
-import sys
-from shutil import rmtree
-from multiprocessing import cpu_count
-from shell import shell
-import requests
 
 from charmhelpers.core import hookenv
-from charmhelpers.core.host import chdir
-from charmhelpers.fetch import apt_install
+
+from charms.layer import snap
 
 config = hookenv.config()
-WORKDIR = '/tmp/ruby'
 
 
 # HELPERS ---------------------------------------------------------------------
-def set_proxy(cmd):
-    """ Take a string to be executed by shell and add proxy if needed
+def ruby_install():
+    """ Downloads ruby-install, gpg verifies it and installs it
     """
-    http_proxy = config.get('http-proxy')
-    if http_proxy:
-        cmd = "env http_proxy='{}' {}".format(http_proxy, cmd)
-    return cmd
-
-
-def git(cmd):
-    """ simple git wrapper
-    """
-    if not os.path.isfile('/usr/bin/git'):
-        apt_install(['git'])
-    shell_cmd = set_proxy("git {}".format(cmd))
-    sh = shell(shell_cmd)
-    if sh.code > 0:
-        hookenv.status_set('blocked',
-                           'Problem with Ruby: {}'.format(sh.errors()))
-        sys.exit(1)
-
-
-def tarball_exists(url):
-    """ Checks that ruby tarball exists on mirror
-    """
-    resp = requests.head(url)
-    if resp.status_code == 200:
-        return True
-    return False
-
-
-def compile_ruby():
-    with chdir(WORKDIR):
-        cmds = [
-            'env RUBY_CFLAGS="-O3" ./configure --prefix=/usr '
-            '--disable-install-rdoc',
-            'make -j{}'.format(cpu_count()),
-            'make install'
-        ]
-
-        for cmd in cmds:
-            hookenv.log('Running compile command: {}'.format(cmd))
-            sh = shell(cmd, record_output=False)
-            if sh.code > 0:
-                hookenv.status_set('blocked',
-                                   'Problem with Ruby: {}'.format(sh.errors()))
-                hookenv.log("Problem with Ruby: {}".format(sh.errors()))
-                sys.exit(1)
-    hookenv.status_set('maintenance', 'Installing Ruby completed.')
-
-
-def download_ruby():
-    """ Downloads ruby tarball, puts it in /tmp
-    """
-    url = os.path.join(config['ruby-mirror'],
-                       'ruby-{}.tar.gz'.format(config['ruby-version']))
-    if not tarball_exists(url):
-        hookenv.status_set(
-            'blocked',
-            'Unable to find {} for download, please check your '
-            'mirror and version'.format(url))
-        hookenv.log('Unable to find {} for download, please check your '
-                    'mirror and version'.format(url))
-        sys.exit(1)
-
-    hookenv.status_set('maintenance',
-                       'Installing Ruby {}'.format(url))
-
-    shell_cmd = set_proxy('wget -q -O /tmp/ruby.tar.gz {}'.format(url))
-    sh = shell(shell_cmd)
-    if sh.code > 0:
-        hookenv.status_set('blocked',
-                           'Problem downlading Ruby: {}'.format(sh.errors()))
-        hookenv.log('Problem downlading Ruby: {}'.format(sh.errors()))
-        sys.exit(1)
-
-
-def extract_ruby():
-    if os.path.exists(WORKDIR):
-        rmtree(WORKDIR)
-    os.makedirs(WORKDIR)
-    with chdir('/tmp'):
-        cmd = ('tar xf ruby.tar.gz -C {} --strip-components=1'.format(WORKDIR))
-        sh = shell(cmd)
-        if sh.code > 0:
-            hookenv.status_set(
-                'blocked',
-                'Problem extracting ruby: {}:{}'.format(cmd,
-                                                        sh.errors()))
-            hookenv.log('Problem extracting ruby: {}:{}'.format(cmd,
-                                                                sh.errors()))
-            sys.exit(1)
+    if not snap.is_installed("ruby"):
+        snap.install("ruby", channel=config.get("snap-channel"), classic=True)
+        hookenv.status_set("maintenance", "Ruby installed from Snapstore {}.".format(
+            config.get("snap-channel")))
 
 
 def ruby_dist_dir():
@@ -114,63 +25,52 @@ def ruby_dist_dir():
     Returns:
     Absolute string of ruby application directory
     """
-    config = hookenv.config()
-    return os.path.join(config['app-path'])
+    return os.path.join(config["app-path"])
 
 
-def bundle(cmd):
+def bundle(*args, **kwargs):
     """ Runs bundle
 
     Usage:
 
        bundle('install')
-       bundle('exec rails s')
-       bundle('rake db:create RAILS_ENV=production')
+       bundle('exec', 'rails', 's')
+       bundle('rake', 'db:create', 'RAILS_ENV=production')
 
     Arguments:
     cmd: Command to run can be string or list
 
     Returns:
-    Will halt on error
+    Raises sh.ErrorReturnCode on error
     """
-    sh = shell('which bundler')
-    if sh.code > 0:
-        gem('install -N bundler')
-    hookenv.status_set('maintenance', 'Running Bundler')
-    with chdir(ruby_dist_dir()):
-        if not isinstance(cmd, str):
-            hookenv.log('{} must be a string'.format(cmd), 'error')
-            sys.exit(1)
-        shell_cmd = set_proxy("bundle {} -j{}".format(cmd, cpu_count()))
-        sh = shell(shell_cmd, record_output=False)
+    from sh import bundler as _bundler_internal
+    from sh import which
 
-        if sh.code > 0:
-            hookenv.status_set("blocked", "Ruby error: {}".format(sh.errors()))
-            hookenv.log("Ruby error: {}".format(sh.errors()))
-            sys.exit(1)
+    has_bundler = which("bundler")
+    if not has_bundler:
+        gem.install("-N", "bundler")
+    hookenv.status_set("maintenance", "Running Bundler")
+    return _bundler_internal.bake(
+        *args, **kwargs, _env=os.environ.copy(), _cwd=ruby_dist_dir()
+    )()
 
 
-def gem(cmd):
+def gem(*args, **kwargs):
     """ Runs gem
 
     Usage:
 
-       gem('install bundler')
+       gem('install', 'bundler')
 
     Arguments:
     cmd: Command to run can be string or list
 
     Returns:
-    Will halt on error
+    Raises sh.ErrorReturnCode on error
     """
-    hookenv.status_set('maintenance', 'Running Gem')
-    if not isinstance(cmd, str):
-        hookenv.log('{} must be a string'.format(cmd), 'error')
-        sys.exit(1)
-    shell_cmd = set_proxy("gem {}".format(cmd))
-    with chdir(ruby_dist_dir()):
-        sh = shell(shell_cmd, record_output=False)
-        if sh.code > 0:
-            hookenv.status_set("blocked", "Ruby error: {}".format(sh.errors()))
-            hookenv.log("Ruby error: {}".format(sh.errors()))
-            sys.exit(1)
+    hookenv.status_set("maintenance", "Running Gem")
+    from sh import gem as _gem_internal
+
+    return _gem_internal.bake(
+        *args, **kwargs, _env=os.environ.copy(), _cwd=ruby_dist_dir()
+    )()

@@ -1,19 +1,9 @@
 options:
-  http-proxy:
-    default: ''
+  snap-channel:
+    default: '2.6/stable'
     description: |
-      Proxy to use for downloading gems etc
+      Install ruby from snapstore
     type: string
-  ruby-version:
-    default: '2.4.2'
-    description: |
-      Ruby Version to use for your application.
-    type: string
-  ruby-mirror:
-    default: 'https://cache.ruby-lang.org/pub/ruby'
-    type: string
-    description: |
-      Default mirror to pull Ruby from, choose one closest to your datacenter.
   app-path:
     type: string
     default: '/srv/app'
