@@ -33,9 +33,10 @@ def bundle(*args, **kwargs):
 
     Usage:
 
+       os.environ['RAILS_ENV'] = 'production'
        bundle('install')
        bundle('exec', 'rails', 's')
-       bundle('rake', 'db:create', 'RAILS_ENV=production')
+       bundle('exec', 'rake', 'db:create')
 
     Arguments:
     cmd: Command to run can be string or list
