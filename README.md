@@ -23,32 +23,16 @@ print(ruby_dist_dir())
 @when('ruby.available')
 def install_deps():
     bundle('install')
-    gem('install dotenv')
-    bundle('exec rails s')
+    gem('install', 'dotenv')
+    bundle('exec', 'rails', 's')
 
 ```
-
-# configuration
-
-You can add additional debian packages to your ruby install by editing a
-`layer.yaml` and placing the package names as follows
-
-```
-options:
-  basic:
-    packages:
-      - libxml2-dev
-      - libyaml-dev
-```
-
-This layer will pick up those dependencies in addition to the required packages
-for ruby compilation.
 
 # license
 
 The MIT License (MIT)
 
-Copyright (c) 2015-2017 Adam Stokes <adam.stokes@ubuntu.com>
+Copyright (c) 2015-2019 Adam Stokes <adam.stokes@ubuntu.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
